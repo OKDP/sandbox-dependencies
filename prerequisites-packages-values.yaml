@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-# Source of truth for where platform-packages publishes its OCI artifacts.
+# Source of truth for where prerequisites-packages publishes its OCI artifacts.
 # Owned by this repository's CI, independent of the deployment contexts (now in okdp-sandbox).
 # CI reads packageRepository via .github/actions/oci-package-prefix.
-packageRepository: quay.io/okdp/platform-packages
+packageRepository: quay.io/okdp/prerequisites-packages

@@ -9,7 +9,9 @@
 
 ## Overview
 
-This repository builds and publishes the OKDP platform packages used to operate platform services with [KuboCD](https://www.kubocd.io/).
+This repository builds and publishes the OKDP platform packages requirements used to operate platform services with [KuboCD](https://www.kubocd.io/).
+
+These packages are not directly part of OKDP distribution but are either mandatory requirements, or additional services required for 
 
 It is **packages-only**: it owns the package definitions under `packages/` and the CI that builds and publishes them as OCI artifacts. It does **not** own the deployment layer (releases, contexts, Flux/KuboCD bootstrap). Deployment lives in [`OKDP/okdp-sandbox`](https://github.com/OKDP/okdp-sandbox), which consumes the packages published here.
 
