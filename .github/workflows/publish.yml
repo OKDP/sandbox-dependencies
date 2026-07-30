@@ -42,7 +42,7 @@ jobs:
         id: prefix
         uses: ./.github/actions/oci-package-prefix
         with:
-          values_path: platform-packages-values.yaml
+          values_path: prerequisites-packages-values.yaml
 
   publish:
     needs: [get-package-oci-prefix]
