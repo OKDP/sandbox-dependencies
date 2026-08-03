@@ -15,11 +15,11 @@
 #
 
 name: Get OCI package prefix
-description: Extract oci_package_prefix from the platform-packages values file (.packageRepository)
+description: Extract oci_package_prefix from the sandbox-dependencies values file (.packageRepository)
 
 inputs:
   values_path:
-    description: Path to the values file holding packageRepository (e.g. platform-packages-values.yaml)
+    description: Path to the values file holding packageRepository (e.g. sandbox-dependencies-values.yaml)
     required: true
 
 outputs:
