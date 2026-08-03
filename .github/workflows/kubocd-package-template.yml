@@ -34,7 +34,7 @@ on:
         type: string
         default: "ghcr.io"
       oci_package_prefix:
-        description: "OCI package prefix, e.g., 'quay.io/my-org/<PACKAGE-PREFIX>', i.e.: <PACKAGE-PREFIX> = platform-packages"
+        description: "OCI package prefix, e.g., 'quay.io/my-org/<PACKAGE-PREFIX>', i.e.: <PACKAGE-PREFIX> = sandbox-dependencies"
         required: true
         type: string
       runs-on:

@@ -69,7 +69,7 @@ jobs:
         id: prefix
         uses: ./.github/actions/oci-package-prefix
         with:
-          values_path: prerequisites-packages-values.yaml
+          values_path: sandbox-dependencies-values.yaml
 
   kubocd-packages-ci:
     needs: [get-package-oci-prefix]

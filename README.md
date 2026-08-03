@@ -1,5 +1,5 @@
-[![ci](https://github.com/okdp/platform-packages/actions/workflows/ci.yml/badge.svg)](https://github.com/okdp/platform-packages/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/okdp/platform-packages)](https://github.com/okdp/platform-packages/releases/latest)&ensp;&ensp;
+[![ci](https://github.com/okdp/sandbox-dependencies/actions/workflows/ci.yml/badge.svg)](https://github.com/okdp/sandbox-dependencies/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/okdp/sandbox-dependencies)](https://github.com/okdp/sandbox-dependencies/releases/latest)&ensp;&ensp;
 [![KuboCD](https://img.shields.io/badge/kubocd-v0.2.2-green.svg)](https://github.com/kubocd/kubocd)&ensp;&ensp;
 [![Kubernetes](https://img.shields.io/badge/kubernetes-1.28+-blue.svg)](https://kubernetes.io/)&ensp;&ensp;
 [![License Apache2](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
@@ -35,27 +35,27 @@ packages/
     ├── jupyterhub/
     ├── seaweedfs/
     └── ...
-platform-packages-values.yaml   # OCI publish target (packageRepository), the source of truth used by CI
+sandbox-dependencies-values.yaml   # OCI publish target (packageRepository), the source of truth used by CI
 ```
 
 Key paths:
 
 - [`packages/system`](./packages/system): infrastructure and platform foundation packages.
 - [`packages/services`](./packages/services): data and application service packages.
-- [`platform-packages-values.yaml`](./platform-packages-values.yaml): the OCI repository packages are published to.
+- [`sandbox-dependencies-values.yaml`](./sandbox-dependencies-values.yaml): the OCI repository packages are published to.
 
 ## Building Packages
 
-The OCI repository packages are published to is defined once in [`platform-packages-values.yaml`](./platform-packages-values.yaml) (`packageRepository`). Use the same value for local builds.
+The OCI repository packages are published to is defined once in [`sandbox-dependencies-values.yaml`](./sandbox-dependencies-values.yaml) (`packageRepository`). Use the same value for local builds.
 
 ### Basic Build Command
 
 ```bash
 # Build a system package
-kubocd package ./packages/system/cert-manager/cert-manager.yaml --ociRepoPrefix quay.io/okdp/platform-packages
+kubocd package ./packages/system/cert-manager/cert-manager.yaml --ociRepoPrefix quay.io/okdp/sandbox-dependencies
 
 # Build a service package
-kubocd package ./packages/services/superset/superset.yaml --ociRepoPrefix quay.io/okdp/platform-packages
+kubocd package ./packages/services/superset/superset.yaml --ociRepoPrefix quay.io/okdp/sandbox-dependencies
 ```
 
 ### Custom OCI Repository
@@ -73,18 +73,18 @@ kubocd package ./packages/services/jupyterhub/jupyterhub.yaml --ociRepoPrefix ha
 ```bash
 # Build all system packages
 for pkg in packages/system/*/; do
-  kubocd package "$pkg"*.yaml --ociRepoPrefix quay.io/okdp/platform-packages
+  kubocd package "$pkg"*.yaml --ociRepoPrefix quay.io/okdp/sandbox-dependencies
 done
 
 # Build specific package
-kubocd package ./packages/services/seaweedfs/seaweedfs.yaml --ociRepoPrefix quay.io/okdp/platform-packages
+kubocd package ./packages/services/seaweedfs/seaweedfs.yaml --ociRepoPrefix quay.io/okdp/sandbox-dependencies
 ```
 
 ### Build Output
 
 Packages are pushed to: `{ociRepoPrefix}/{package-name}:{tag}`
 
-Example: `quay.io/okdp/platform-packages/superset:4.0.0-p02`
+Example: `quay.io/okdp/sandbox-dependencies/superset:4.0.0-p02`
 
 ## GitHub CI and Publishing
 
@@ -94,7 +94,7 @@ The GitHub workflows share the reusable [`kubocd-package-template.yml`](./.githu
 
 [`ci.yml`](./.github/workflows/ci.yml) runs on pushes, pull requests, and manual dispatch. It:
 
-- reads the OCI package prefix from [`platform-packages-values.yaml`](./platform-packages-values.yaml);
+- reads the OCI package prefix from [`sandbox-dependencies-values.yaml`](./sandbox-dependencies-values.yaml);
 - builds **every** package manifest under `packages/` that contains `modules:`;
 - pushes CI test packages to the repository-scoped GitHub Container Registry path.
 
@@ -107,15 +107,15 @@ The KuboCD package CI job is skipped for fork pull requests because GitHub inten
 The `ci` workflow builds packages for CI validation and pushes them to the repository-scoped GitHub Container Registry path:
 
 ```text
-ghcr.io/okdp/platform-packages/platform-packages/{package-name}:{tag}
+ghcr.io/okdp/sandbox-dependencies/sandbox-dependencies/{package-name}:{tag}
 ```
 
 ### Release Publishing
 
-Published release packages use the public repository from [`platform-packages-values.yaml`](./platform-packages-values.yaml):
+Published release packages use the public repository from [`sandbox-dependencies-values.yaml`](./sandbox-dependencies-values.yaml):
 
 ```text
-quay.io/okdp/platform-packages/{package-name}:{tag}
+quay.io/okdp/sandbox-dependencies/{package-name}:{tag}
 ```
 
 [`publish.yml`](./.github/workflows/publish.yml) can be dispatched manually and publishes packages to Quay using `REGISTRY_USERNAME` and `REGISTRY_ROBOT_TOKEN`. [`publish-on-merge.yml`](./.github/workflows/publish-on-merge.yml) triggers that publish workflow after a successful `ci` run on `main`, and [`release-please.yml`](./.github/workflows/release-please.yml) triggers it when Release Please creates a new release after a merged pull request.
