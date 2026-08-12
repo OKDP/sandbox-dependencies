@@ -280,7 +280,7 @@ modules:
                     "config": {
                       "host-sending-registration-request-must-match": ["true"],
                       "client-uris-must-match": ["true"],
-                      "trusted-hosts": ["{{ .Context.defaultIdp.settings.trustedHosts | join "\", \"" | replace "{{ .Context.ingress.suffix }}" $.Context.platform.ingress.suffix }}"]
+                      "trusted-hosts": ["{{ .Context.defaultIdp.settings.anonymousDCR.trustedHosts | join "\", \"" | replace "{{ .Context.ingress.suffix }}" $.Context.platform.ingress.suffix }}"]
                     }
                   },
                   {
@@ -292,7 +292,7 @@ modules:
                         "true"
                       ],
                       "allowed-client-scopes": [
-                        "{{ .Context.defaultIdp.settings.allowedScopes | join "\", \"" }}"
+                        "{{ .Context.defaultIdp.settings.anonymousDCR.allowedScopes | join "\", \"" }}"
                       ]
                     }
                   }
