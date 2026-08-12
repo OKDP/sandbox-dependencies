@@ -31,9 +31,11 @@ schema:
   parameters:
     properties:
       username: { type: string, required: true, default: "admin" }
-      password: { type: string, required: true, default: "admin123" }
+      # Pas de defaut: un mot de passe livre avec le package part en production.
+      password: { type: string, required: true, minLength: 8 }
       rootAccessKey: { type: string, required: true, default: "okdpadmin", minLength: 3, maxLength: 20 }
-      rootSecretKey: { type: string, required: true, default: "okdp-seaweedfs-root-change-me", minLength: 8, maxLength: 40 }
+      # Pas de defaut: c est la cle secrete de l identite root du store.
+      rootSecretKey: { type: string, required: true, minLength: 8, maxLength: 40 }
       stsRoleArn: { type: string, required: true, default: "arn:aws:iam::000000000000:role/S3WriteRole" }
       volumeReplicas: { type: integer, required: true, default: 1 }
       masterStorage: { type: string, required: true, default: "1" }
