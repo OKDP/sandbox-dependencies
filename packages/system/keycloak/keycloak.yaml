@@ -14,9 +14,14 @@
 #  limitations under the License.
 #
 
+# Connections wiring: the database comes from a consumed database-server
+# Connection (parameter db, values read flat). Realm settings, including the
+# anonymous Dynamic Client Registration policies, are ordinary parameters.
+# No Connection is published, see the note at the end of this file.
+
 apiVersion: v1alpha1
 name: keycloak
-tag: 24.4.11-p10
+tag: 24.4.11-p11
 protected: false
 description: |
   Keycloak identity and access management for Kubernetes
@@ -46,6 +51,89 @@ schema:
         default: 0.5
         multipleOf: 0.25
         description: "CPU request in vCPU. Limits are calculated as 2x the request."
+      db: { type: connectionRef, contract: database-server, required: true }
+      realm:
+        properties:
+          name: { type: string, required: true }
+          displayName: { type: string, default: "" }
+          accessTokenLifespan: { type: integer, default: 3600 }
+      # Anonymous Dynamic Client Registration policies of the realm. Callers that
+      # register clients through the DCR API must be covered by trustedHosts, and
+      # any non-default scope such requests ask for must be in allowedScopes.
+      # Defaults are applied in the template, the schema forbids them on arrays:
+      # trustedHosts ["*.<ingress suffix>", "*.svc.cluster.local"], allowedScopes
+      # ["groups"].
+      anonymousDCR:
+        properties:
+          trustedHosts:
+            type: array
+            items: { type: string }
+          allowedScopes:
+            type: array
+            items: { type: string }
+      users:
+        type: array
+        items:
+          properties:
+            username: { type: string, required: true }
+            email: { type: string }
+            firstName: { type: string }
+            lastName: { type: string }
+            password: { type: string }
+            serviceAccountClientId: { type: string }
+            roles:
+              type: array
+              items: { type: string }
+      groups:
+        type: array
+        items:
+          properties:
+            name: { type: string, required: true }
+      roles:
+        type: array
+        items:
+          properties:
+            name: { type: string, required: true }
+      clients:
+        type: array
+        items:
+          properties:
+            clientId: { type: string, required: true }
+            name: { type: string }
+            publicClient: { type: boolean }
+            secret: { type: string }
+            redirectUris:
+              type: array
+              items: { type: string }
+            webOrigins:
+              type: array
+              items: { type: string }
+            defaultClientScopes:
+              type: array
+              items: { type: string }
+            optionalClientScopes:
+              type: array
+              items: { type: string }
+            serviceAccountsEnabled: { type: boolean }
+            standardFlowEnabled: { type: boolean }
+            implicitFlowEnabled: { type: boolean }
+            directAccessGrantsEnabled: { type: boolean }
+      clientScopes:
+        type: array
+        items:
+          properties:
+            name: { type: string, required: true }
+            description: { type: string }
+            protocol: { type: string }
+            attributes: { type: object, properties: {}, additionalProperties: true }
+            protocolMappers:
+              type: array
+              items:
+                properties:
+                  name: { type: string, required: true }
+                  protocol: { type: string }
+                  protocolMapper: { type: string }
+                  config: { type: object, properties: {}, additionalProperties: true }
 
 modules:
   - name: main
@@ -56,23 +144,10 @@ modules:
         tag: 24.4.11
     values: |
 
-      {{- $namespace := printf "%v" .Release.spec.targetNamespace -}}
-      {{- $release := printf "%v" .Release.metadata.name -}}
-      {{- $domain := printf "%v" .Context.platform.ingress.suffix -}}
-      
-      {{- $databaseId := .Context.defaultIdp.settings.database.provider -}}
-      {{- $databaseProvider := (index .Context $databaseId).provider -}}
-      {{- $databaseHost := $databaseProvider.endpoints.host
-        | replace "{{ .Release.namespace }}" $namespace
-        | replace "{{ .Release.metadata.name }}" $release
-        | replace "{{ .Context.ingress.suffix }}" $domain -}}
-      {{- $databasePort := printf "%v" $databaseProvider.endpoints.port -}}
-      
-      {{- $databaseJdbcUrl := $databaseProvider.endpoints.jdbcUrl 
-        | replace "{{ connection.host }}" $databaseHost
-        | replace "{{ connection.port }}" $databasePort
-        | replace "{{ dbName }}" .Context.defaultIdp.settings.database.name -}}
-      
+      {{- $dcr := (.Parameters.anonymousDCR | default dict) -}}
+      {{- $dcrTrustedHosts := ($dcr.trustedHosts | default (list (printf "*.%s" $.Context.platform.ingress.suffix) "*.svc.cluster.local")) -}}
+      {{- $dcrAllowedScopes := ($dcr.allowedScopes | default (list "groups")) -}}
+
       global:
         security:
           allowInsecureImages: true
@@ -89,7 +164,7 @@ modules:
           cert-manager.io/cluster-issuer: "{{ .Context.platform.certificateIssuers.selfSigned.name }}"
         tls: true
         hostname: keycloak.{{ .Context.platform.ingress.suffix }}
-      
+
       auth:
         adminUser: "{{ .Parameters.adminUser }}"
         adminPassword: "{{ .Parameters.adminPassword }}"
@@ -97,35 +172,35 @@ modules:
       postgresql:
         enabled: false
       externalDatabase:
-        host: "{{ $databaseHost }}"
-        port: "{{ $databasePort }}"
-        database: {{ .Context.defaultIdp.settings.database.name }}
+        host: "{{ .Parameters.db.host }}"
+        port: "{{ .Parameters.db.port }}"
+        database: {{ .Parameters.db.dbName }}
       extraEnvVars:
       - name: KC_DB
         value: 'postgres'
       - name: KC_DB_URL
-        value: '{{ $databaseJdbcUrl }}'
+        value: 'jdbc:{{ .Parameters.db.engine }}://{{ .Parameters.db.host }}:{{ .Parameters.db.port }}/{{ .Parameters.db.dbName }}'
       - name: KC_DB_USERNAME
         valueFrom:
           secretKeyRef:
-            name: {{ .Context.defaultIdp.settings.database.credentialsSecret.name }}
-            key: {{ .Context.defaultIdp.settings.database.credentialsSecret.usernameKey }}
+            name: {{ .Parameters.db.secretRef }}
+            key: username
       - name: KC_DB_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: {{ .Context.defaultIdp.settings.database.credentialsSecret.name }}
-            key: {{ .Context.defaultIdp.settings.database.credentialsSecret.passwordKey }}
+            name: {{ .Parameters.db.secretRef }}
+            key: password
       - name: KC_METRICS_ENABLED
         value: "false"
       - name: KC_TRACING_ENABLED
         value: "false"
       - name: KC_CACHE
         value: "local"
-      
+
       production: false
       cache:
         enabled: false
-      
+
       resources:
         requests:
           cpu: "{{ mulf (float64 .Parameters.cpu) 1000 }}m"
@@ -133,7 +208,7 @@ modules:
         limits:
           cpu: "{{ mulf (float64 .Parameters.cpu) 2 }}"
           memory: "{{ mulf (float64 .Parameters.memoryGi) 2 }}Gi"
-      
+
       keycloakConfigCli:
         image:
           registry: quay.io
@@ -143,11 +218,11 @@ modules:
         configuration:
           master.json: |
             {
-              "realm": "{{ .Context.defaultIdp.settings.realm.name }}",
+              "realm": "{{ .Parameters.realm.name }}",
               "enabled": true,
-              "displayName": "{{ .Context.defaultIdp.settings.realm.displayName }}",
+              "displayName": "{{ .Parameters.realm.displayName }}",
               "users": [
-                {{- range $index, $user := .Context.defaultIdp.settings.users }}
+                {{- range $index, $user := .Parameters.users }}
                 {{- if $index }},{{ end }}
                 {
                   "username": "{{ $user.username }}",
@@ -172,7 +247,7 @@ modules:
                 {{- end }}
               ],
               "groups": [
-                {{- range $index, $group := .Context.defaultIdp.settings.groups }}
+                {{- range $index, $group := .Parameters.groups }}
                 {{- if $index }},{{ end }}
                 {
                   "name": "{{ $group.name }}"
@@ -181,7 +256,7 @@ modules:
               ],
               "roles": {
                 "realm": [
-                  {{- range $index, $role := .Context.defaultIdp.settings.roles }}
+                  {{- range $index, $role := .Parameters.roles }}
                   {{- if $index }},{{ end }}
                   {
                     "name": "{{ $role.name }}"
@@ -190,7 +265,7 @@ modules:
                 ]
               },
               "clients": [
-                {{- range $index, $client := .Context.defaultIdp.settings.clients }}
+                {{- range $index, $client := .Parameters.clients }}
                 {{- if $index }},{{ end }}
                 {
                   "clientId": "{{ $client.clientId }}",
@@ -203,13 +278,13 @@ modules:
                   "redirectUris": [
                     {{- range $uriIndex, $uri := $client.redirectUris }}
                     {{- if $uriIndex }},{{ end }}
-                    "{{ $uri | replace "{{ .Context.ingress.suffix }}" $.Context.platform.ingress.suffix }}"
+                    "{{ $uri }}"
                     {{- end }}
                   ],
                   "webOrigins": [
                     {{- range $originIndex, $origin := $client.webOrigins }}
                     {{- if $originIndex }},{{ end }}
-                    "{{ $origin | replace "{{ .Context.ingress.suffix }}" $.Context.platform.ingress.suffix }}"
+                    "{{ $origin }}"
                     {{- end }}
                   ]
                   {{- if $client.defaultClientScopes }},
@@ -234,7 +309,7 @@ modules:
                 {{- end }}
               ],
               "clientScopes": [
-                {{- range $index, $scope := .Context.defaultIdp.settings.clientScopes }}
+                {{- range $index, $scope := .Parameters.clientScopes }}
                 {{- if $index }},{{ end }}
                 {
                   "id": "{{ $scope.name }}-scope-id",
@@ -270,7 +345,7 @@ modules:
                 }
                 {{- end }}
               ],
-              "accessTokenLifespan": {{ .Context.defaultIdp.settings.realm.accessTokenLifespan }},
+              "accessTokenLifespan": {{ .Parameters.realm.accessTokenLifespan }},
               "components": {
                 "org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy": [
                   {
@@ -280,7 +355,7 @@ modules:
                     "config": {
                       "host-sending-registration-request-must-match": ["true"],
                       "client-uris-must-match": ["true"],
-                      "trusted-hosts": ["{{ .Context.defaultIdp.settings.anonymousDCR.trustedHosts | join "\", \"" | replace "{{ .Context.ingress.suffix }}" $.Context.platform.ingress.suffix }}"]
+                      "trusted-hosts": ["{{ $dcrTrustedHosts | join "\", \"" | replace "{{ .Context.ingress.suffix }}" $.Context.platform.ingress.suffix }}"]
                     }
                   },
                   {
@@ -292,7 +367,7 @@ modules:
                         "true"
                       ],
                       "allowed-client-scopes": [
-                        "{{ .Context.defaultIdp.settings.anonymousDCR.allowedScopes | join "\", \"" }}"
+                        "{{ $dcrAllowedScopes | join "\", \"" }}"
                       ]
                     }
                   }
@@ -305,3 +380,11 @@ dependencies:
   - external-secrets
   - database-server
   - ingress
+# No outputs: keycloak publishes no connection.
+#
+# It used to publish keycloak-oidc, which made the platform's identity look
+# like something one service provides and others consume. It is not: keycloak
+# is the sandbox's provider, an enterprise IdP is deployed by nobody here, and
+# every service reads the same coordinates whichever it is. They live in the
+# platform Context under `oidc`, and this package is now just the thing that
+# happens to serve them in this sandbox.

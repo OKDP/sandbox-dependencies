@@ -22,7 +22,7 @@
 
 apiVersion: v1alpha1
 name: seaweedfs
-tag: 4.17.0-p4-cnx02
+tag: 4.17.0-p4-cnx01
 protected: false
 description: |
   SeaweedFS is a simple and highly scalable distributed file system. There are the objectives to store billions of files and to serve the files fast!
@@ -33,25 +33,22 @@ usage:
 schema:
   parameters:
     properties:
-      username: { title: "Admin | Username | | order:1 columns:2", type: string, required: true, default: "admin" }
-      # Pas de defaut: un mot de passe livre avec le package part en production.
-      password: { title: "Admin | Password secret key | | order:2 columns:2", type: string, required: true, minLength: 8 }
-      rootAccessKey: { title: "Admin | Root access key | | order:3 columns:2 advanced:true", type: string, required: true, default: "okdpadmin", minLength: 3, maxLength: 20 }
-      # Pas de defaut: c est la cle secrete de l identite root du store.
-      rootSecretKey: { title: "Admin | Root secret key | | order:4 columns:2 advanced:true", type: string, required: true, minLength: 8, maxLength: 40 }
-      stsRoleArn: { title: "Admin | STS role ARN | | order:5 advanced:true", type: string, required: true, default: "arn:aws:iam::000000000000:role/S3WriteRole" }
-      volumeReplicas: { title: "Storage | Volume replicas | stepper | order:1 columns:2", type: integer, required: true, default: 1 }
-      masterStorage: { title: "Storage | Master size | | order:2 columns:2 advanced:true", type: string, required: true, default: "1" }
-      masterLogStorage: { title: "Storage | Master log size | | order:3 columns:2 advanced:true", type: string, required: true, default: "0.5" }
-      volumeStorage: { title: "Storage | Volume size | | order:4 columns:2", type: string, required: true, default: "2" }
-      filerStorage: { title: "Storage | Filer size | | order:5 columns:2", type: string, required: true, default: "0.5" }
-      filerLogStorage: { title: "Storage | Filer log size | | order:6 columns:2 advanced:true", type: string, required: true, default: "0.5" }
+      username: { type: string, required: true, default: "admin" }
+      password: { type: string, required: true, default: "admin123" }
+      rootAccessKey: { type: string, required: true, default: "okdpadmin", minLength: 3, maxLength: 20 }
+      rootSecretKey: { type: string, required: true, default: "okdp-seaweedfs-root-change-me", minLength: 8, maxLength: 40 }
+      stsRoleArn: { type: string, required: true, default: "arn:aws:iam::000000000000:role/S3WriteRole" }
+      volumeReplicas: { type: integer, required: true, default: 1 }
+      masterStorage: { type: string, required: true, default: "1" }
+      masterLogStorage: { type: string, required: true, default: "0.5" }
+      volumeStorage: { type: string, required: true, default: "2" }
+      filerStorage: { type: string, required: true, default: "0.5" }
+      filerLogStorage: { type: string, required: true, default: "0.5" }
       # S3 identities of the store, one entry per principal. actions are the
       # SeaweedFS verbs, scoped to buckets when buckets is set. sts marks a
       # principal allowed to assume the STS role, which SeaweedFS only grants
       # to an Admin identity.
       grants:
-        title: "Access | Grants | | order:1"
         type: array
         items:
           properties:
@@ -72,7 +69,6 @@ schema:
       # Buckets created at startup. paths seeds prefixes inside the bucket for
       # consumers that require them to exist beforehand.
       buckets:
-        title: "Access | Buckets | | order:2"
         type: array
         items:
           properties:
@@ -352,7 +348,7 @@ modules:
 # a Secret. Consumers bring their own identity as a package parameter anyway.
 outputs: |
   - name: s3
-    connectionType: s3
+    contract: s3
     values:
       apiUrl: "https://{{ .Release.metadata.name }}-{{ .Release.spec.targetNamespace }}-api.{{ .Context.platform.ingress.suffix }}"
       internalUrl: "http://{{ .Release.metadata.name }}-s3.{{ .Release.spec.targetNamespace }}.svc.cluster.local:8333"
