@@ -16,7 +16,7 @@
 
 apiVersion: v1alpha1
 name: cert-manager
-tag: 1.17.1-p06
+tag: 1.17.1-p07
 protected: true
 schema:
   parameters:
@@ -84,8 +84,7 @@ modules:
       installCRDs: true
       enableCertificateOwnerRef: true
       image:
-        {{ $redirection := imageRedirect "quay.io/jetstack/cert-manager-controller" . }}
-        repository: {{ $redirection.repository }}
+        repository: quay.io/jetstack/cert-manager-controller
       webhook:
         extraArgs:
           - "--dynamic-serving-leaf-duration=2160h"    # 90 days validity instead of 7 days
@@ -106,8 +105,7 @@ modules:
         authorizedSecrets:
           - {{ .Parameters.trust.bundle.name }}
       image:
-        {{ $redirection := imageRedirect "quay.io/jetstack/trust-manager" . }}
-        repository: {{ $redirection.repository }}
+        repository: quay.io/jetstack/trust-manager
     dependsOn:
       - main
   - name: issuers
