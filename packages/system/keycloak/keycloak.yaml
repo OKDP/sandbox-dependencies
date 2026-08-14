@@ -16,7 +16,7 @@
 
 apiVersion: v1alpha1
 name: keycloak
-tag: 24.4.11-p09
+tag: 24.4.11-p10
 protected: false
 description: |
   Keycloak identity and access management for Kubernetes
@@ -280,7 +280,7 @@ modules:
                     "config": {
                       "host-sending-registration-request-must-match": ["true"],
                       "client-uris-must-match": ["true"],
-                      "trusted-hosts": ["*.svc.cluster.local", "*.okdp.sandbox"]
+                      "trusted-hosts": ["{{ .Context.defaultIdp.settings.anonymousDCR.trustedHosts | join "\", \"" | replace "{{ .Context.ingress.suffix }}" $.Context.platform.ingress.suffix }}"]
                     }
                   },
                   {
@@ -292,7 +292,7 @@ modules:
                         "true"
                       ],
                       "allowed-client-scopes": [
-                        "groups"
+                        "{{ .Context.defaultIdp.settings.anonymousDCR.allowedScopes | join "\", \"" }}"
                       ]
                     }
                   }
