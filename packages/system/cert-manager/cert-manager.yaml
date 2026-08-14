@@ -16,7 +16,7 @@
 
 apiVersion: v1alpha1
 name: cert-manager
-tag: 1.17.1-p07
+tag: 1.17.1-p08
 protected: true
 schema:
   parameters:
@@ -62,16 +62,13 @@ schema:
                     size: { type: integer, default: 256 }
   context:
     properties:
-      platform:
+      certificateIssuers:
         required: true
         properties:
-          certificateIssuers:
+          selfSigned:
             required: true
             properties:
-              selfSigned:
-                required: true
-                properties:
-                  name: { type: string, required: true }
+              name: { type: string, required: true }
 modules:
   - name: main
     timeout: 10m

@@ -19,14 +19,14 @@
 
 apiVersion: v1alpha1
 name: vault
-tag: 0.29.1-cnx01
+tag: 0.29.1-p01
 protected: true
 description: |
   HashiCorp Vault, the secret backend a SecretStore points at. Runs in dev mode by default,
   which unseals itself and keeps everything in memory.
 usage:
   text: |
-    Vault is reachable at https://vault.{{ .Context.platform.ingress.suffix }}
+    Vault is reachable at https://vault.{{ .Context.ingress.suffix }}
     In dev mode the root token is "root" and the store is emptied on every restart.
 schema:
   parameters:
@@ -36,20 +36,17 @@ schema:
       uiEnabled: { type: boolean, default: true, title: "Server | Web UI | | order:3" }
   context:
     properties:
-      platform:
+      certificateIssuers:
         required: true
         properties:
-          certificateIssuers:
+          selfSigned:
             required: true
             properties:
-              selfSigned:
-                required: true
-                properties:
-                  name: { type: string, required: true }
-          ingress:
-            required: true
-            properties:
-              suffix: { type: string, required: true }
+              name: { type: string, required: true }
+      ingress:
+        required: true
+        properties:
+          suffix: { type: string, required: true }
 modules:
   - name: main
     timeout: 10m
@@ -59,7 +56,7 @@ modules:
         chart: vault
         version: "0.29.1"
     values: |
-      {{- $vaultHost := printf "%s.%s" .Parameters.ingressHost .Context.platform.ingress.suffix -}}
+      {{- $vaultHost := printf "%s.%s" .Parameters.ingressHost .Context.ingress.suffix -}}
       server:
         dev:
           enabled: {{ .Parameters.dev }}
@@ -67,7 +64,7 @@ modules:
           enabled: true
           ingressClassName: nginx
           annotations:
-            cert-manager.io/cluster-issuer: {{ .Context.platform.certificateIssuers.selfSigned.name }}
+            cert-manager.io/cluster-issuer: {{ .Context.certificateIssuers.selfSigned.name }}
           hosts:
             - host: {{ $vaultHost }}
               paths: []

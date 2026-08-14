@@ -14,21 +14,18 @@
 #  limitations under the License.
 #
 
-# Connections wiring: the database comes from a consumed database-server
-# Connection (parameter db, values read flat). Realm settings, including the
-# anonymous Dynamic Client Registration policies, are ordinary parameters.
-# No Connection is published, see the note at the end of this file.
+# Consumes one database-server Connection (parameter db). Publishes none.
 
 apiVersion: v1alpha1
 name: keycloak
-tag: 24.4.11-p11
+tag: 24.4.11-p14
 protected: false
 description: |
   Keycloak identity and access management for Kubernetes
 usage:
   text: |
     Keycloak provides centralized authentication and authorization.
-    Access the admin console at https://keycloak.{{ .Context.platform.ingress.suffix }}
+    Access the admin console at https://keycloak.{{ .Context.ingress.suffix }}
     Default admin credentials: admin/admin
 schema:
   parameters:
@@ -57,14 +54,26 @@ schema:
           name: { type: string, required: true }
           displayName: { type: string, default: "" }
           accessTokenLifespan: { type: integer, default: 3600 }
-      # Anonymous Dynamic Client Registration policies of the realm. Callers that
-      # register clients through the DCR API must be covered by trustedHosts, and
-      # any non-default scope such requests ask for must be in allowedScopes.
-      # Defaults are applied in the template, the schema forbids them on arrays:
-      # trustedHosts ["*.<ingress suffix>", "*.svc.cluster.local"], allowedScopes
-      # ["groups"].
+      # DCR callers must be covered by trustedHosts, their extra scopes by
+      # allowedScopes. The defaults live in the template because KuboCD panics
+      # on a schema default for an array: ["*.<ingress suffix>",
+      # "*.svc.cluster.local"] / ["groups"].
+      #
+      # Off by default: anonymous registration is only needed when the platform
+      # provisions its clients through dcr, and it lets anyone reaching a
+      # trusted host register a client without authenticating.
+      #
+      # Off does not mean "drop the policy": keycloak-config-cli removes from
+      # the realm what the JSON stops declaring, and a realm with no
+      # trusted-hosts policy accepts anonymous registrations from anywhere. It
+      # means the policy trusts no host at all.
+      #
+      # It also answers what the arrays cannot: an unset array and one
+      # explicitly emptied both reach the template as an empty list, so
+      # emptying trustedHosts could never mean "trust nobody".
       anonymousDCR:
         properties:
+          enabled: { type: boolean, default: false, title: "DCR | Anonymous registration | | order:1", description: "Let a client register itself without authenticating, limited to trustedHosts. Off, the policy stays registered with no trusted host, which turns every anonymous registration down. Needed only when oidc.clientProvisioning is dcr." }
           trustedHosts:
             type: array
             items: { type: string }
@@ -145,7 +154,8 @@ modules:
     values: |
 
       {{- $dcr := (.Parameters.anonymousDCR | default dict) -}}
-      {{- $dcrTrustedHosts := ($dcr.trustedHosts | default (list (printf "*.%s" $.Context.platform.ingress.suffix) "*.svc.cluster.local")) -}}
+      {{- $dcrEnabled := $dcr.enabled -}}
+      {{- $dcrTrustedHosts := ($dcr.trustedHosts | default (list (printf "*.%s" $.Context.ingress.suffix) "*.svc.cluster.local")) -}}
       {{- $dcrAllowedScopes := ($dcr.allowedScopes | default (list "groups")) -}}
 
       global:
@@ -161,9 +171,9 @@ modules:
         annotations:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
           nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-          cert-manager.io/cluster-issuer: "{{ .Context.platform.certificateIssuers.selfSigned.name }}"
+          cert-manager.io/cluster-issuer: "{{ .Context.certificateIssuers.selfSigned.name }}"
         tls: true
-        hostname: keycloak.{{ .Context.platform.ingress.suffix }}
+        hostname: keycloak.{{ .Context.ingress.suffix }}
 
       auth:
         adminUser: "{{ .Parameters.adminUser }}"
@@ -355,7 +365,11 @@ modules:
                     "config": {
                       "host-sending-registration-request-must-match": ["true"],
                       "client-uris-must-match": ["true"],
-                      "trusted-hosts": ["{{ $dcrTrustedHosts | join "\", \"" | replace "{{ .Context.ingress.suffix }}" $.Context.platform.ingress.suffix }}"]
+                      {{- if $dcrEnabled }}
+                      "trusted-hosts": ["{{ $dcrTrustedHosts | join "\", \"" | replace "{{ .Context.ingress.suffix }}" $.Context.ingress.suffix }}"]
+                      {{- else }}
+                      "trusted-hosts": []
+                      {{- end }}
                     }
                   },
                   {
@@ -380,11 +394,5 @@ dependencies:
   - external-secrets
   - database-server
   - ingress
-# No outputs: keycloak publishes no connection.
-#
-# It used to publish keycloak-oidc, which made the platform's identity look
-# like something one service provides and others consume. It is not: keycloak
-# is the sandbox's provider, an enterprise IdP is deployed by nobody here, and
-# every service reads the same coordinates whichever it is. They live in the
-# platform Context under `oidc`, and this package is now just the thing that
-# happens to serve them in this sandbox.
+# No outputs: the OIDC coordinates are platform Context values, not a
+# connection one service would provide to the others.
