@@ -24,14 +24,14 @@
 
 apiVersion: v1alpha1
 name: kubauth
-tag: 0.3.0-snapshot-cnx01
+tag: 0.3.0-snapshot-p01
 protected: false
 description: |
   Kubauth, a Kubernetes-native OIDC provider. Users, groups and OIDC clients are custom resources,
   which is what lets the Control Plane manage identity through the API server.
 usage:
   text: |
-    Kubauth answers at https://{{ .Parameters.oidcIngressHost }}.{{ .Context.platform.ingress.suffix }}
+    Kubauth answers at https://{{ .Parameters.oidcIngressHost }}.{{ .Context.ingress.suffix }}
     Create the first administrator before signing in, see optional/kubauth/README.
 schema:
   parameters:
@@ -49,7 +49,6 @@ schema:
       enforcePKCE: { type: boolean, default: false, title: "Authentication | Enforce PKCE | | order:2 advanced:true" }
       ssoSticky: { type: boolean, default: false, title: "Authentication | Sticky SSO | | order:3 advanced:true" }
       clientsNamespace: { type: string, default: "kubauth-oidc", title: "Clients | Namespace | | order:1 columns:2" }
-      clientsCreateNamespace: { type: boolean, default: true, title: "Clients | Create namespace | | order:2" }
       usersNamespace: { type: string, default: "kubauth-users", title: "Users | Namespace | | order:1 columns:2" }
       usersCreateNamespace: { type: boolean, default: true, title: "Users | Create namespace | | order:2" }
       auditEnabled: { type: boolean, default: true, title: "Users | Audit trail | | order:3" }
@@ -57,20 +56,17 @@ schema:
       logMode: { type: string, default: "text", enum: ["text", "json"], title: "Server | Log format | | order:7 advanced:true" }
   context:
     properties:
-      platform:
+      certificateIssuers:
         required: true
         properties:
-          certificateIssuers:
+          selfSigned:
             required: true
             properties:
-              selfSigned:
-                required: true
-                properties:
-                  name: { type: string, required: true }
-          ingress:
-            required: true
-            properties:
-              suffix: { type: string, required: true }
+              name: { type: string, required: true }
+      ingress:
+        required: true
+        properties:
+          suffix: { type: string, required: true }
 modules:
   - name: main
     timeout: 10m
@@ -79,8 +75,9 @@ modules:
         repository: quay.io/kubauth/charts/kubauth
         tag: "0.3.0-snapshot"
     values: |
-      {{- $kubauthHost := printf "%s.%s" .Parameters.oidcIngressHost .Context.platform.ingress.suffix -}}
+      {{- $kubauthHost := printf "%s.%s" .Parameters.oidcIngressHost .Context.ingress.suffix -}}
       networkPolicies:
+        enabled: {{ .Parameters.networkPolicies }}
         forWebhooks: true
         {{- with .Parameters.hostNetworkCidr }}
         ipBlock: {{ . }}
@@ -94,7 +91,7 @@ modules:
           mode: {{ .Parameters.logMode }}
           level: {{ .Parameters.logLevel }}
         server:
-          certificateIssuer: {{ .Context.platform.certificateIssuers.selfSigned.name }}
+          certificateIssuer: {{ .Context.certificateIssuers.selfSigned.name }}
           tls: {{ .Parameters.oidcServerTls }}
         ingress:
           host: {{ $kubauthHost }}
@@ -102,19 +99,14 @@ modules:
           passthrough: false
           annotations:
             {{- toYaml (.Parameters.oidcIngressAnnotations | default dict) | nindent 8 }}
-        postLogoutURL: https://{{ $kubauthHost }}/index
-        issuer: https://{{ $kubauthHost }}
-        networkPolicies:
-          enabled: {{ .Parameters.networkPolicies }}
+        postLogoutURL: {{ if .Parameters.oidcServerTls }}https{{ else }}http{{ end }}://{{ $kubauthHost }}/index
+        issuer: {{ if .Parameters.oidcServerTls }}https{{ else }}http{{ end }}://{{ $kubauthHost }}
         sso:
           cleanupPeriod: 5m
           sticky: {{ .Parameters.ssoSticky }}
         allowPasswordGrant: {{ .Parameters.allowPasswordGrant }}
         enforcePKCE: {{ .Parameters.enforcePKCE }}
-        clients:
-          createNamespace: {{ .Parameters.clientsCreateNamespace }}
-          namespace: {{ .Parameters.clientsNamespace }}
-        multiTenant: false
+        clientPrivilegedNamespace: {{ .Parameters.clientsNamespace }}
         idProvider:
           {{- if .Parameters.auditEnabled }}
           baseURL: http://localhost:6805

@@ -16,7 +16,7 @@
 
 apiVersion: v1alpha1
 name: dns-server
-tag: 1.0.0-p03
+tag: 1.0.0-p04
 protected: false
 description: |
   DNS Server - Lightweight DNS server for local development
@@ -33,13 +33,10 @@ schema:
       nodePort: { type: integer, default: 30053 }
   context:
     properties:
-      platform:
+      ingress:
         required: true
         properties:
-          ingress:
-            required: true
-            properties:
-              suffix: { type: string, required: true }
+          suffix: { type: string, required: true }
 modules:
   - name: main
     timeout: 10m
@@ -56,7 +53,7 @@ modules:
         pullPolicy: IfNotPresent
       
       config:
-        domain: {{ .Context.platform.ingress.suffix }}
+        domain: {{ .Context.ingress.suffix }}
         target: {{ .Parameters.target }}
       
       service:
