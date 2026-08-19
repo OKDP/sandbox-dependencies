@@ -17,7 +17,7 @@
 # Produces one s3 Connection (output "s3"), consumes none.
 apiVersion: v1alpha1
 name: seaweedfs
-tag: 4.17.0-p6
+tag: 4.17.0-p07
 protected: false
 description: |
   SeaweedFS is a simple and highly scalable distributed file system. There are the objectives to store billions of files and to serve the files fast!
@@ -182,8 +182,8 @@ modules:
           method: basic
           basic:
             create_auth_secret: creds-seaweedfs-filer-basic
-            username: {{ .Parameters.username }}
-            password: {{ .Parameters.password }}
+            username: {{ .Parameters.username | quote }}
+            password: {{ .Parameters.password | quote }}
 
   - name: main
     dependsOn:
