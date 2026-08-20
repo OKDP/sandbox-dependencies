@@ -19,14 +19,14 @@
 
 apiVersion: v1alpha1
 name: vault
-tag: 0.29.1-p01
+tag: 0.29.1-p02
 protected: true
 description: |
   HashiCorp Vault, the secret backend a SecretStore points at. Runs in dev mode by default,
   which unseals itself and keeps everything in memory.
 usage:
   text: |
-    Vault is reachable at https://vault.{{ .Context.ingress.suffix }}
+    Vault is reachable at https://{{ .Parameters.ingressHost }}.{{ .Context.ingress.suffix }}
     In dev mode the root token is "root" and the store is emptied on every restart.
 schema:
   parameters:
