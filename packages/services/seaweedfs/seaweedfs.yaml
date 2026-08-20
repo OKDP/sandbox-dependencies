@@ -30,7 +30,7 @@ schema:
     properties:
       username: { title: "Admin | Username | | order:1 columns:2", type: string, required: true, default: "admin" }
       # No default: a password shipped with a package ends up in production.
-      password: { title: "Admin | Password secret key | | order:2 columns:2", type: string, required: true, minLength: 8 }
+      password: { title: "Admin | Password | | order:2 columns:2", type: string, required: true, minLength: 8 }
       rootAccessKey: { title: "Admin | Root access key | | order:3 columns:2 advanced:true", type: string, required: true, default: "okdpadmin", minLength: 3, maxLength: 20 }
       # No default: secret key of the root identity of the store.
       rootSecretKey: { title: "Admin | Root secret key | | order:4 columns:2 advanced:true", type: string, required: true, minLength: 8, maxLength: 40 }
