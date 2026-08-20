@@ -24,14 +24,14 @@
 
 apiVersion: v1alpha1
 name: kubauth
-tag: 0.3.0-snapshot-p01
+tag: 0.3.0-snapshot-p02
 protected: false
 description: |
   Kubauth, a Kubernetes-native OIDC provider. Users, groups and OIDC clients are custom resources,
   which is what lets the Control Plane manage identity through the API server.
 usage:
   text: |
-    Kubauth answers at https://{{ .Parameters.oidcIngressHost }}.{{ .Context.ingress.suffix }}
+    Kubauth answers at {{ if .Parameters.oidcServerTls }}https{{ else }}http{{ end }}://{{ .Parameters.oidcIngressHost }}.{{ .Context.ingress.suffix }}
     Create the first administrator before signing in, see optional/kubauth/README.
 schema:
   parameters:
