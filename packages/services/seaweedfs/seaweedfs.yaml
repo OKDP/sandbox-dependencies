@@ -17,7 +17,7 @@
 # Produces one s3 Connection (output "s3"), consumes none.
 apiVersion: v1alpha1
 name: seaweedfs
-tag: 4.17.0-p07
+tag: 4.17.0-p08
 protected: false
 description: |
   SeaweedFS is a simple and highly scalable distributed file system. There are the objectives to store billions of files and to serve the files fast!
