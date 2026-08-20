@@ -348,6 +348,8 @@ outputs: |
       internalUrl: "http://{{ .Release.metadata.name }}-s3.{{ .Release.spec.targetNamespace }}.svc.cluster.local:8333"
       consoleUrl: "https://{{ .Release.metadata.name }}-{{ .Release.spec.targetNamespace }}.{{ .Context.ingress.suffix }}"
       region: us-east-1
+      # SeaweedFS serves buckets by path, never by virtual host.
+      pathStyle: true
 
 roles:
   - storage
