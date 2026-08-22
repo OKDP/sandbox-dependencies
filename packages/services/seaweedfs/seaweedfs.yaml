@@ -255,7 +255,7 @@ modules:
           size: "{{ .Parameters.filerLogStorage }}Gi"
         ingress:
           enabled: true
-          className: {{ .Context.platform.ingress.className }}
+          className: {{ .Context.ingress.className }}
           annotations:
             nginx.ingress.kubernetes.io/proxy-body-size: "130m"
             cert-manager.io/cluster-issuer: "{{ .Context.certificateIssuers.selfSigned.name }}"
@@ -296,7 +296,7 @@ modules:
 
         ingress:
           enabled: true
-          className: {{ .Context.platform.ingress.className }}
+          className: {{ .Context.ingress.className }}
           annotations:
             nginx.ingress.kubernetes.io/proxy-body-size: "130m"
             cert-manager.io/cluster-issuer: "{{ .Context.certificateIssuers.selfSigned.name }}"
