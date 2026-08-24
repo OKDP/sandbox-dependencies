@@ -18,7 +18,7 @@
 
 apiVersion: v1alpha1
 name: keycloak
-tag: 24.4.11-p14
+tag: 24.4.11-p15
 protected: false
 description: |
   Keycloak identity and access management for Kubernetes
@@ -54,6 +54,8 @@ schema:
           name: { type: string, required: true }
           displayName: { type: string, default: "" }
           accessTokenLifespan: { type: integer, default: 3600 }
+          ssoSessionIdleTimeout: { type: integer, default: 1800 }
+          ssoSessionMaxLifespan: { type: integer, default: 36000 }
       # DCR callers must be covered by trustedHosts, their extra scopes by
       # allowedScopes. The defaults live in the template because KuboCD panics
       # on a schema default for an array: ["*.<ingress suffix>",
@@ -356,6 +358,8 @@ modules:
                 {{- end }}
               ],
               "accessTokenLifespan": {{ .Parameters.realm.accessTokenLifespan }},
+              "ssoSessionIdleTimeout": {{ .Parameters.realm.ssoSessionIdleTimeout }},
+              "ssoSessionMaxLifespan": {{ .Parameters.realm.ssoSessionMaxLifespan }},
               "components": {
                 "org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy": [
                   {
