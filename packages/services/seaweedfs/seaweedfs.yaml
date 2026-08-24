@@ -17,7 +17,7 @@
 # Produces one s3 Connection (output "s3"), consumes none.
 apiVersion: v1alpha1
 name: seaweedfs
-tag: 4.17.0-p08
+tag: 4.17.0-p09
 protected: false
 description: |
   SeaweedFS is a simple and highly scalable distributed file system. There are the objectives to store billions of files and to serve the files fast!
@@ -273,6 +273,9 @@ modules:
       s3:
         enabled: true
         enableAuth: true
+        # Roll the gateway when the identities change: it only reads its config at boot.
+        podAnnotations:
+          checksum/auth-config: {{ printf "%v/%v/%v" (.Parameters.grants | default list) .Parameters.password .Parameters.rootSecretKey | sha256sum | quote }}
         existingConfigSecret: {{ $s3ConfigSecret }}
         createBuckets:
           {{- range $b := (.Parameters.buckets | default list) }}
