@@ -275,7 +275,7 @@ modules:
         enableAuth: true
         # Roll the gateway when the identities change: it only reads its config at boot.
         podAnnotations:
-          checksum/auth-config: {{ printf "%v/%v/%v" (.Parameters.grants | default list) .Parameters.password .Parameters.rootSecretKey | sha256sum | quote }}
+          checksum/auth-config: {{ printf "%v/%v/%v/%v" (.Parameters.grants | default list) .Parameters.password .Parameters.rootAccessKey .Parameters.rootSecretKey | sha256sum | quote }}
         existingConfigSecret: {{ $s3ConfigSecret }}
         createBuckets:
           {{- range $b := (.Parameters.buckets | default list) }}
