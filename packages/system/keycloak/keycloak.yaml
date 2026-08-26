@@ -54,7 +54,9 @@ schema:
           name: { type: string, required: true }
           displayName: { type: string, default: "" }
           accessTokenLifespan: { type: integer, default: 3600 }
-          ssoSessionIdleTimeout: { type: integer, default: 1800 }
+          # At least accessTokenLifespan: Keycloak caps a token's life by the
+          # session, so a shorter idle makes the declared lifespan unreachable.
+          ssoSessionIdleTimeout: { type: integer, default: 3600 }
           ssoSessionMaxLifespan: { type: integer, default: 36000 }
       # DCR callers must be covered by trustedHosts, their extra scopes by
       # allowedScopes. The defaults live in the template because KuboCD panics
