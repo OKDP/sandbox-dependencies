@@ -281,7 +281,13 @@ modules:
           # here and does not belong: it configures another component, so it
           # rolled the gateway for nothing and put a digest derived from it in an
           # annotation for no benefit.
-          checksum/auth-config: {{ printf "%v/%v/%v/%v" (.Parameters.grants | default list) .Parameters.rootAccessKey .Parameters.rootSecretKey .Parameters.stsRoleArn | sha256sum | quote }}
+          #
+          # Encoded before it is hashed, and not joined on a separator: the
+          # values carry that separator themselves, stsRoleArn always does, so
+          # ("b/c", "d") and ("b", "c/d") joined on "/" are the same string and
+          # the same digest. Rotating the secret key would then have rolled
+          # nothing, which is the very failure this annotation exists to avoid.
+          checksum/auth-config: {{ list (.Parameters.grants | default list) .Parameters.rootAccessKey .Parameters.rootSecretKey .Parameters.stsRoleArn | toJson | sha256sum | quote }}
         existingConfigSecret: {{ $s3ConfigSecret }}
         createBuckets:
           {{- range $b := (.Parameters.buckets | default list) }}
