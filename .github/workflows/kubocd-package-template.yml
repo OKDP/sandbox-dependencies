@@ -144,7 +144,7 @@ jobs:
             ref="${OCI_REPO_PREFIX}/${name}:${tag}"
 
             out=$(oras manifest fetch --descriptor "${ref}" 2>&1); rc=$?
-            if [[ ${rc} -eq 0 ]]; then 
+            if [[ ${rc} -eq 0 ]]; then
               echo "::notice title=Already published::${ref} exists, skipping ${package}"
               SKIPPED="${SKIPPED} ${name}:${tag}"
             elif grep -qE ': not found|404' <<<"${out}"; then
