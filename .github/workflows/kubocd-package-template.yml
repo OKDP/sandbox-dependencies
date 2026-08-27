@@ -37,6 +37,14 @@ on:
         description: "OCI package prefix, e.g., 'quay.io/my-org/<PACKAGE-PREFIX>', i.e.: <PACKAGE-PREFIX> = sandbox-dependencies"
         required: true
         type: string
+      on_existing_tag:
+        description: >-
+          What to do when a package tag already exists on the target registry.
+          "skip" leaves the published artifact alone and builds the rest;
+          "fail" stops the job. A published tag is immutable either way.
+        required: false
+        type: string
+        default: "skip"
       runs-on:
         description: GitHub Actions Runner image
         required: true
@@ -107,27 +115,106 @@ jobs:
         run: |
           KUBOCD_PACKAGES=$(find packages -type f \( -name "*.yaml" -o -name "*.yml" \) -exec grep -l '^modules:' {} \; | tr '\n' ' ')
           echo "KUBOCD_PACKAGES=$KUBOCD_PACKAGES" >> $GITHUB_ENV
+      
+      - name: Install yq 🛠️
+        uses: mikefarah/yq@v4.45.1
 
-      - name: Build and push KuboCD packages into CI registry (${{ inputs.ci_registry }}) 📦
-        if: inputs.publish_to_registry == 'false'
+      # oras reads the credentials docker/login-action already wrote to
+      # ~/.docker/config.json, so no second login is needed.
+      - name: Install oras 🛠️
+        uses: oras-project/setup-oras@v1
+
+      # A published tag is immutable: the same reference must always resolve to
+      # the same artifact. Anything already on the registry is dropped from the
+      # build list here, before it can be rebuilt and pushed over itself.
+      # Only the public registry is immutable. The CI registry is a scratch
+      # area: it must always rebuild, otherwise a PR gets no validation.
+      - name: Drop packages already published under their tag 🔒
+        if: inputs.publish_to_registry == 'true'
         run: |
+          set -uo pipefail
+
+          KEEP=""
+          SKIPPED=""
+
           for package in ${KUBOCD_PACKAGES}
           do
-             echo "kubocd package ${package} --ociRepoPrefix $OCI_REPO_PREFIX"
-             kubocd package ${package} --ociRepoPrefix $OCI_REPO_PREFIX
+            name=$(yq -e -r '.name' "${package}")
+            tag=$(yq  -e -r '.tag'  "${package}")
+            ref="${OCI_REPO_PREFIX}/${name}:${tag}"
+
+            if oras manifest fetch --descriptor "${ref}" >/dev/null 2>&1; then
+              echo "::notice title=Already published::${ref} exists, skipping ${package}"
+              SKIPPED="${SKIPPED} ${name}:${tag}"
+            else
+              echo "${ref} is free ✓"
+              KEEP="${KEEP} ${package}"
+            fi
           done
+
+          if [[ -n "${SKIPPED}" && "${{ inputs.on_existing_tag }}" == "fail" ]]; then
+            echo "::error title=Tag already published::${SKIPPED# } already exist(s) on ${REGISTRY}. Bump the package version."
+            exit 1
+          fi
+
+          echo "KUBOCD_PACKAGES=${KEEP# }" >> $GITHUB_ENV
+          {
+            echo "### Package publication plan"
+            echo ""
+            echo "| Package | Action |"
+            echo "| --- | --- |"
+            for s in ${SKIPPED}; do echo "| \`${s}\` | skipped, already published |"; done
+            for p in ${KEEP};    do echo "| \`${p}\` | build and push |"; done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Nothing left to publish ✅
+        if: inputs.publish_to_registry == 'true' && env.KUBOCD_PACKAGES == ''
+        run: echo "Every package is already published under its current tag. Nothing to do."
+
+      - name: Build and push KuboCD packages into CI registry (${{ inputs.ci_registry }}) 📦
+        if: inputs.publish_to_registry == 'false' && env.KUBOCD_PACKAGES != ''
+        run: |
+          set -uo pipefail
+          FAILED=""
+
+          for package in ${KUBOCD_PACKAGES}
+          do
+             echo "::group::kubocd package ${package}"
+             echo "kubocd package ${package} --ociRepoPrefix $OCI_REPO_PREFIX"
+             # One broken package must not stop the others: collect the failures
+             # and report them all at the end.
+             kubocd package ${package} --ociRepoPrefix $OCI_REPO_PREFIX || FAILED="${FAILED} ${package}"
+             echo "::endgroup::"
+          done
+
+          if [[ -n "${FAILED}" ]]; then
+            echo "::error title=Package build failed::${FAILED# }"
+            exit 1
+          fi
         env:
           KCD_OCI_GHCR_IO_USER: ${{ github.actor }}
           KCD_OCI_GHCR_IO_SECRET: ${{ github.token }}
 
       - name: Build and push KuboCD packages into public registry (${{ inputs.registry }}) 📦
-        if: inputs.publish_to_registry == 'true'
+        if: inputs.publish_to_registry == 'true' && env.KUBOCD_PACKAGES != ''
         run: |
+          set -uo pipefail
+          FAILED=""
+
           for package in ${KUBOCD_PACKAGES}
           do
+             echo "::group::kubocd package ${package}"
              echo "kubocd package ${package} --ociRepoPrefix $OCI_REPO_PREFIX"
-             kubocd package ${package} --ociRepoPrefix $OCI_REPO_PREFIX
+             # One broken package must not stop the others: collect the failures
+             # and report them all at the end.
+             kubocd package ${package} --ociRepoPrefix $OCI_REPO_PREFIX || FAILED="${FAILED} ${package}"
+             echo "::endgroup::"
           done
+
+          if [[ -n "${FAILED}" ]]; then
+            echo "::error title=Package publication failed::${FAILED# }"
+            exit 1
+          fi
         env:
           KCD_OCI_QUAY_IO_USER: ${{ secrets.REGISTRY_USERNAME }}
           KCD_OCI_QUAY_IO_SECRET: ${{ secrets.REGISTRY_ROBOT_TOKEN }}
