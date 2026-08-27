@@ -18,7 +18,7 @@
 
 apiVersion: v1alpha1
 name: keycloak
-tag: 24.4.11-p15
+tag: 24.4.11-p16
 protected: false
 description: |
   Keycloak identity and access management for Kubernetes
@@ -95,6 +95,9 @@ schema:
             password: { type: string }
             serviceAccountClientId: { type: string }
             roles:
+              type: array
+              items: { type: string }
+            groups:
               type: array
               items: { type: string }
       groups:
@@ -255,6 +258,9 @@ modules:
                   {{- end }}
                   {{- if $user.serviceAccountClientId }}
                   "serviceAccountClientId": "{{ $user.serviceAccountClientId }}",
+                  {{- end }}
+                  {{- if $user.groups }}
+                  "groups": [{{ range $i, $g := $user.groups }}{{ if $i }},{{ end }}"/{{ $g }}"{{ end }}],
                   {{- end }}
                   "realmRoles": {{ toJson $user.roles }}
                 }
