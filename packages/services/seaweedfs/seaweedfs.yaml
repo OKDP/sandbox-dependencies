@@ -275,12 +275,13 @@ modules:
         enableAuth: true
         # Roll the gateway when the identities change: it only reads its config at boot.
         podAnnotations:
-          # Every value the gateway's identity config is built from, or a
-          # change to one of them leaves it running on the old config. The STS
-          # role was missing, so editing it changed the config and rolled
-          # nothing. The digest covers a compound of several values, two of
-          # them high-entropy keys, rather than a bare hash of the password.
-          checksum/auth-config: {{ printf "%v/%v/%v/%v/%v" (.Parameters.grants | default list) .Parameters.password .Parameters.rootAccessKey .Parameters.rootSecretKey .Parameters.stsRoleArn | sha256sum | quote }}
+          # Exactly the values this gateway's identity config is built from, no
+          # more and no less. stsRoleArn was missing, so editing the role changed
+          # the config and rolled nothing. The filer's basic-auth password was
+          # here and does not belong: it configures another component, so it
+          # rolled the gateway for nothing and put a digest derived from it in an
+          # annotation for no benefit.
+          checksum/auth-config: {{ printf "%v/%v/%v/%v" (.Parameters.grants | default list) .Parameters.rootAccessKey .Parameters.rootSecretKey .Parameters.stsRoleArn | sha256sum | quote }}
         existingConfigSecret: {{ $s3ConfigSecret }}
         createBuckets:
           {{- range $b := (.Parameters.buckets | default list) }}
