@@ -143,12 +143,16 @@ jobs:
             tag=$(yq  -e -r '.tag'  "${package}")
             ref="${OCI_REPO_PREFIX}/${name}:${tag}"
 
-            if oras manifest fetch --descriptor "${ref}" >/dev/null 2>&1; then
+            out=$(oras manifest fetch --descriptor "${ref}" 2>&1); rc=$?
+            if [[ ${rc} -eq 0 ]]; then 
               echo "::notice title=Already published::${ref} exists, skipping ${package}"
               SKIPPED="${SKIPPED} ${name}:${tag}"
-            else
+            elif grep -qE ': not found|404' <<<"${out}"; then
               echo "${ref} is free ✓"
               KEEP="${KEEP} ${package}"
+            else
+              echo "::error title=Cannot determine tag state::${ref}: ${out}"
+              exit 1
             fi
           done
 
