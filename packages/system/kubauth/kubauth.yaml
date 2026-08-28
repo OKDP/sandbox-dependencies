@@ -24,7 +24,7 @@
 
 apiVersion: v1alpha1
 name: kubauth
-tag: 0.3.0-snapshot-p02
+tag: 0.3.0-snapshot-p03
 protected: false
 description: |
   Kubauth, a Kubernetes-native OIDC provider. Users, groups and OIDC clients are custom resources,
@@ -95,7 +95,7 @@ modules:
           tls: {{ .Parameters.oidcServerTls }}
         ingress:
           host: {{ $kubauthHost }}
-          class: nginx
+          class: {{ .Context.ingress.className }}
           passthrough: false
           annotations:
             {{- toYaml (.Parameters.oidcIngressAnnotations | default dict) | nindent 8 }}
