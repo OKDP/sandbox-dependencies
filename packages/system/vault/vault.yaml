@@ -19,7 +19,7 @@
 
 apiVersion: v1alpha1
 name: vault
-tag: 0.29.1-p02
+tag: 0.29.1-p03
 protected: true
 description: |
   HashiCorp Vault, the secret backend a SecretStore points at. Runs in dev mode by default,
@@ -62,7 +62,7 @@ modules:
           enabled: {{ .Parameters.dev }}
         ingress:
           enabled: true
-          ingressClassName: nginx
+          ingressClassName: {{ .Context.ingress.className }}
           annotations:
             cert-manager.io/cluster-issuer: {{ .Context.certificateIssuers.selfSigned.name }}
           hosts:
