@@ -275,18 +275,10 @@ modules:
         enableAuth: true
         # Roll the gateway when the identities change: it only reads its config at boot.
         podAnnotations:
-          # Exactly the values this gateway's identity config is built from, no
-          # more and no less. stsRoleArn was missing, so editing the role changed
-          # the config and rolled nothing. The filer's basic-auth password was
-          # here and does not belong: it configures another component, so it
-          # rolled the gateway for nothing and put a digest derived from it in an
-          # annotation for no benefit.
-          #
-          # Encoded before it is hashed, and not joined on a separator: the
-          # values carry that separator themselves, stsRoleArn always does, so
-          # ("b/c", "d") and ("b", "c/d") joined on "/" are the same string and
-          # the same digest. Rotating the secret key would then have rolled
-          # nothing, which is the very failure this annotation exists to avoid.
+          # Exactly the values the gateway's identity config is built from.
+          # Encoded before hashing, not joined on a separator: the values can
+          # carry the separator themselves (stsRoleArn always does), and
+          # ("b/c","d") joined on "/" is the same digest as ("b","c/d").
           checksum/auth-config: {{ list (.Parameters.grants | default list) .Parameters.rootAccessKey .Parameters.rootSecretKey .Parameters.stsRoleArn | toJson | sha256sum | quote }}
         existingConfigSecret: {{ $s3ConfigSecret }}
         createBuckets:
