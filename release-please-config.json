@@ -1,20 +1,220 @@
 {
-  "extra-files": [
-    "README.md"
-  ],
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "separate-pull-requests": false,
+  "include-v-in-tag": true,
   "draft-pull-request": true,
   "packages": {
-    ".": {
-      "initial-version": "0.3.0",
-      "changelog-path": "CHANGELOG.md",
+    "packages/services/seaweedfs": {
+      "component": "seaweedfs",
       "release-type": "simple",
-      "changelog-type": "default",
-      "bump-minor-pre-major": false,
-      "bump-patch-for-minor-pre-major": false,
-      "draft": false,
-      "prerelease": false,
-      "skip-snapshot": false
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "seaweedfs.yaml"
+        }
+      ]
+    },
+    "packages/system/cert-manager": {
+      "component": "cert-manager",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "cert-manager.yaml"
+        }
+      ]
+    },
+    "packages/system/cloudnative-pg": {
+      "component": "cloudnative-pg",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "cloudnative-pg.yaml"
+        }
+      ]
+    },
+    "packages/system/cnpg-postgresql": {
+      "component": "cnpg-postgresql",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "cnpg-postgresql.yaml"
+        }
+      ]
+    },
+    "packages/system/coredns-patch": {
+      "component": "coredns-patch",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "coredns-patch.yaml"
+        }
+      ]
+    },
+    "packages/system/dns-server": {
+      "component": "dns-server",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "dns-server.yaml"
+        }
+      ]
+    },
+    "packages/system/external-secrets": {
+      "component": "external-secrets",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "external-secrets.yaml"
+        }
+      ]
+    },
+    "packages/system/ingress-nginx": {
+      "component": "ingress-nginx",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "ingress-nginx.yaml"
+        }
+      ]
+    },
+    "packages/system/keycloak": {
+      "component": "keycloak",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "keycloak.yaml"
+        }
+      ]
+    },
+    "packages/system/kubauth": {
+      "component": "kubauth",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "kubauth.yaml"
+        }
+      ]
+    },
+    "packages/system/kubocd-webhooks": {
+      "component": "kubocd-webhooks",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "webhooks.yaml"
+        }
+      ]
+    },
+    "packages/system/local-secrets-provider": {
+      "component": "local-secrets-provider",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "local-secrets-provider.yaml"
+        }
+      ]
+    },
+    "packages/system/tools": {
+      "component": "tools",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "tools.yaml"
+        }
+      ]
+    },
+    "packages/system/vault": {
+      "component": "vault",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "vault.yaml"
+        }
+      ]
     }
   },
-  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
+  "changelog-sections": [
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "docs",
+      "section": "Documentation",
+      "hidden": false
+    },
+    {
+      "type": "refactor",
+      "section": "Refactoring",
+      "hidden": false
+    },
+    {
+      "type": "test",
+      "section": "Tests",
+      "hidden": true
+    },
+    {
+      "type": "ci",
+      "section": "Continuous Integration",
+      "hidden": true
+    }
+  ]
 }

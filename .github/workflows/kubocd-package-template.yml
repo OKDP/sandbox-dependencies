@@ -45,6 +45,14 @@ on:
         required: false
         type: string
         default: "skip"
+      package_paths:
+        description: >-
+          JSON array of package directories to process, as emitted by
+          release-please's paths_released output. Empty or "[]" means every
+          package under packages/.
+        required: false
+        type: string
+        default: ""
       runs-on:
         description: GitHub Actions Runner image
         required: true
@@ -112,9 +120,31 @@ jobs:
 
       # Build and push packages
       - name: Find KuboCD packages 🔎
+        env:
+          PACKAGE_PATHS: ${{ inputs.package_paths }}
         run: |
-          KUBOCD_PACKAGES=$(find packages -type f \( -name "*.yaml" -o -name "*.yml" \) -exec grep -l '^modules:' {} \; | tr '\n' ' ')
-          echo "KUBOCD_PACKAGES=$KUBOCD_PACKAGES" >> $GITHUB_ENV
+          set -uo pipefail
+
+          if [[ -n "${PACKAGE_PATHS}" && "${PACKAGE_PATHS}" != "[]" ]]; then
+            # A release published only some packages: resolve each released
+            # directory to the manifest it contains.
+            KUBOCD_PACKAGES=""
+            for dir in $(jq -r '.[]' <<<"${PACKAGE_PATHS}")
+            do
+              manifest=$(find "${dir}" -maxdepth 1 -type f \( -name "*.yaml" -o -name "*.yml" \) -exec grep -l '^modules:' {} \;)
+              if [[ -z "${manifest}" ]]; then
+                echo "::error title=No package manifest::${dir} was released but holds no manifest with 'modules:'"
+                exit 1
+              fi
+              KUBOCD_PACKAGES="${KUBOCD_PACKAGES} ${manifest}"
+            done
+            KUBOCD_PACKAGES="${KUBOCD_PACKAGES# }"
+          else
+            KUBOCD_PACKAGES=$(find packages -type f \( -name "*.yaml" -o -name "*.yml" \) -exec grep -l '^modules:' {} \; | tr '\n' ' ')
+          fi
+
+          echo "Processing: ${KUBOCD_PACKAGES}"
+          echo "KUBOCD_PACKAGES=${KUBOCD_PACKAGES}" >> $GITHUB_ENV
       
       - name: Install yq 🛠️
         uses: mikefarah/yq@v4.45.1

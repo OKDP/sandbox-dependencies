@@ -20,7 +20,7 @@
 # owner passwordSecret published as secretRef.
 apiVersion: v1alpha1
 name: cnpg-postgresql
-tag: 18.3-p03
+tag: 1.0.0 # x-release-please-version
 protected: false
 description: |
   Defines multiple logical PostgreSQL databases managed by the CloudNativePG operator within a single PostgreSQL
