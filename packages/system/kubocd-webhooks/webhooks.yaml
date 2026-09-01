@@ -16,7 +16,7 @@
 
 apiVersion: v1alpha1
 name: kubocd-webhooks
-tag: v0.3.2-p01
+tag: 1.0.0 # x-release-please-version
 protected: true
 description: |
   Second stage of kubocd deployment.

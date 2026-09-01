@@ -153,7 +153,7 @@ Published release packages use the public repository from [`sandbox-dependencies
 quay.io/okdp/sandbox-dependencies/{package-name}:{tag}
 ```
 
-[`publish.yml`](./.github/workflows/publish.yml) can be dispatched manually and publishes packages to Quay using `REGISTRY_USERNAME` and `REGISTRY_ROBOT_TOKEN`. [`publish-on-merge.yml`](./.github/workflows/publish-on-merge.yml) triggers that publish workflow after a successful `ci` run on `main`, and [`release-please.yml`](./.github/workflows/release-please.yml) triggers it when Release Please creates a new release after a merged pull request.
+[`publish.yml`](./.github/workflows/publish.yml) can be dispatched manually and publishes packages to Quay using `REGISTRY_USERNAME` and `REGISTRY_ROBOT_TOKEN`. [`release-please.yml`](./.github/workflows/release-please.yml) triggers it when Release Please creates a new release after a merged pull request.
 
 ---
 
