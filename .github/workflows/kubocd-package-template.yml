@@ -206,6 +206,40 @@ jobs:
         if: inputs.publish_to_registry == 'true' && env.KUBOCD_PACKAGES == ''
         run: echo "Every package is already published under its current tag. Nothing to do."
 
+      # The CI registry is a scratch area. Now that release-please owns the
+      # manifest tag, every run would otherwise build the same 1.0.0 artifact
+      # over the top of the last one, from any branch. Stamp a unique,
+      # obviously non-releasable version instead, so a specific build can be
+      # pinned and cannot change under whoever pinned it.
+      #
+      # This rewrites the runner's checkout only. Nothing is committed, and the
+      # release path to the public registry never runs this step.
+      - name: Stamp a CI version on each manifest 🏷️
+        if: inputs.publish_to_registry == 'false' && env.KUBOCD_PACKAGES != ''
+        run: |
+          set -uo pipefail
+
+          # SemVer pre-release identifiers allow only letters, digits and
+          # hyphens, so "chore/release-please" has to be flattened. Truncated
+          # to keep the tag well inside the 128-character OCI limit.
+          SLUG=$(echo "${GITHUB_REF_NAME}" \
+                 | tr -c 'a-zA-Z0-9-' '-' \
+                 | sed 's/-\{2,\}/-/g;s/^-//;s/-$//' \
+                 | cut -c1-30 | sed 's/-$//')
+
+          # The "g" is git-describe convention, and it also guarantees the
+          # identifier is never all-digits: a short sha such as "0123456" would
+          # otherwise be an invalid SemVer numeric identifier (leading zero).
+          CI_TAG="0.0.0-ci.${SLUG}.g${GITHUB_SHA::7}"
+
+          for package in ${KUBOCD_PACKAGES}
+          do
+            sed -i "s|^tag: .*|tag: ${CI_TAG}|" "${package}"
+          done
+
+          echo "CI tag: ${CI_TAG}"
+          echo "::notice title=CI package tag::${CI_TAG}"
+
       - name: Build and push KuboCD packages into CI registry (${{ inputs.ci_registry }}) 📦
         if: inputs.publish_to_registry == 'false' && env.KUBOCD_PACKAGES != ''
         run: |
