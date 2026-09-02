@@ -16,7 +16,7 @@
 
 apiVersion: v1alpha1
 name: tools
-tag: 1.0.0-p01
+tag: 1.0.0 # x-release-please-version
 protected: false
 description: |
   Miscellaneous Kubernetes tools including reloader, replicator and secret-generator
