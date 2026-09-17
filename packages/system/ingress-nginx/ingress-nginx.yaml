@@ -16,7 +16,7 @@
 
 apiVersion: v1alpha1
 name: ingress-nginx
-tag: 4.12.1-p03
+tag: 4.12.1-1.0.0
 protected: false
 description: |
   NGINX Ingress Controller for Kubernetes with support for multiple deployment modes
