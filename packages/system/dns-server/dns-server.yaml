@@ -16,7 +16,7 @@
 
 apiVersion: v1alpha1
 name: dns-server
-tag: 1.0.0-1.0.0
+tag: 1.0.0-1.0.1
 protected: false
 description: |
   DNS Server - Lightweight DNS server for local development
