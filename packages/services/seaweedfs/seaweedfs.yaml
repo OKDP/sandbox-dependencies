@@ -317,7 +317,7 @@ modules:
     source:
       oci:
         repository: quay.io/okdp/charts/seaweedfs-provisioning
-        tag: 1.0.0
+        tag: 1.0.1
     values: |
       {{- $namespace := printf "%v" .Release.spec.targetNamespace -}}
       {{- $release := printf "%v" .Release.metadata.name -}}
@@ -325,8 +325,6 @@ modules:
       fullnameOverride: {{ $release }}-provisioning
 
       endpoint: http://{{ $release }}-s3.{{ $namespace }}:8333
-      job:
-        image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
 
       credentials:
         accessKey: {{ .Parameters.rootAccessKey | quote }}
