@@ -35,6 +35,7 @@ schema:
       # No default: secret key of the root identity of the store.
       rootSecretKey: { title: "Admin | Root secret key | | order:4 columns:2 advanced:true", type: string, required: true, minLength: 8, maxLength: 40 }
       stsRoleArn: { title: "Admin | STS role ARN | | order:5 advanced:true", type: string, required: true, default: "arn:aws:iam::000000000000:role/S3WriteRole" }
+      serviceAccountIssuer: { title: "Admin | Service account issuer | | order:6 advanced:true", type: string, required: true, default: "https://kubernetes.default.svc.cluster.local", description: "OIDC issuer of the cluster service account tokens, trusted by SeaweedFS so the provisioning job can assume its role without static keys." }
       volumeReplicas: { title: "Storage | Volume replicas | stepper | order:1 columns:2", type: integer, required: true, default: 1 }
       masterStorage: { title: "Storage | Master size | | order:2 columns:2 advanced:true", type: string, required: true, default: "1" }
       masterLogStorage: { title: "Storage | Master log size | | order:3 columns:2 advanced:true", type: string, required: true, default: "0.5" }
@@ -119,6 +120,19 @@ modules:
           issuer: "seaweedfs-sts"
           signingKey: ""
 
+        # The cluster service account issuer, so the provisioning job assumes its
+        # role with its projected token instead of static keys.
+        providers:
+          oidc:
+            enabled: true
+            providerName: "kubernetes"
+            providerType: "oidc"
+            issuer: {{ .Parameters.serviceAccountIssuer | quote }}
+            clientId: "seaweedfs"
+            jwksUri: "{{ .Parameters.serviceAccountIssuer }}/openid/v1/jwks"
+            configExtra:
+              tlsCaCert: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+
         # -- IAM policies to define in the SeaweedFS IAM config.
         policies:
           - name: "S3WritePolicy"
@@ -131,6 +145,20 @@ modules:
 
         # -- IAM roles to define in the SeaweedFS IAM config.
         roles:
+          - roleName: "{{ $release }}-provisioning"
+            roleArn: "arn:aws:iam::000000000000:role/{{ $release }}-provisioning"
+            attachedPolicies: ["S3WritePolicy"]
+            trustPolicy:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Principal:
+                    Federated: "kubernetes"
+                  Action:
+                    - "sts:AssumeRoleWithWebIdentity"
+                  Condition:
+                    StringEquals:
+                      "oidc:sub": "system:serviceaccount:{{ .Release.spec.targetNamespace }}:{{ $release }}-provisioning"
           - roleName: "S3WriteRole"
             roleArn: "{{ .Parameters.stsRoleArn }}"
             attachedPolicies: ["S3WritePolicy"]
@@ -200,10 +228,6 @@ modules:
       {{- $domain := printf "%v" .Context.ingress.suffix -}}
 
       {{- $s3ConfigSecret := printf "%s-s3-config" $release -}}
-      {{- $stsEnabled := false -}}
-      {{- range $g := (.Parameters.grants | default list) }}
-        {{- if $g.sts }}{{- $stsEnabled = true }}{{- end }}
-      {{- end }}
 
       {{- $seaweedfsS3Host := printf "%s-%s-api.%s" $release $namespace $domain -}}
       {{- $seaweedfsFilerHost := printf "%s-%s.%s" $release $namespace $domain -}}
@@ -289,10 +313,8 @@ modules:
           - name: auth-config
             mountPath: /etc/seaweed/iam
             readOnly: true
-        {{- if $stsEnabled }}
         extraArgs:
           - "-iam.config=/etc/seaweed/iam/iam.json"
-        {{- end }}
 
         ingress:
           enabled: true
@@ -317,7 +339,7 @@ modules:
     source:
       oci:
         repository: quay.io/okdp/charts/seaweedfs-provisioning
-        tag: 1.0.1
+        tag: 1.1.0
     values: |
       {{- $namespace := printf "%v" .Release.spec.targetNamespace -}}
       {{- $release := printf "%v" .Release.metadata.name -}}
@@ -327,8 +349,9 @@ modules:
       endpoint: http://{{ $release }}-s3.{{ $namespace }}:8333
 
       credentials:
-        accessKey: {{ .Parameters.rootAccessKey | quote }}
-        secretKey: {{ .Parameters.rootSecretKey | quote }}
+        webIdentity:
+          roleArn: "arn:aws:iam::000000000000:role/{{ $release }}-provisioning"
+          audience: "seaweedfs"
 
       buckets:
         {{- range $b := (.Parameters.buckets | default list) }}
