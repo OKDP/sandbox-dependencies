@@ -317,7 +317,7 @@ modules:
     source:
       oci:
         repository: quay.io/okdp/charts/seaweedfs-provisioning
-        tag: 1.0.1
+        tag: 1.1.0
     values: |
       {{- $namespace := printf "%v" .Release.spec.targetNamespace -}}
       {{- $release := printf "%v" .Release.metadata.name -}}
