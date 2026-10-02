@@ -1,5 +1,5 @@
 {
-  "packages/services/seaweedfs": "1.0.1",
+  "packages/services/seaweedfs": "1.0.2",
   "packages/system/cert-manager": "1.0.1",
   "packages/system/cloudnative-pg": "1.0.1",
   "packages/system/cnpg-postgresql": "1.0.1",

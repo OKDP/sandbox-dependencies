@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/OKDP/sandbox-dependencies/compare/seaweedfs/v1.0.1...seaweedfs/v1.0.2) (2026-10-02)
+
+
+### Bug Fixes
+
+* **seaweedfs:** consume seaweedfs-provisioning 1.0.1 and drop the mc image override ([478a064](https://github.com/OKDP/sandbox-dependencies/commit/478a0641e9b6f8a22fe02d907500297272ff9179))
+* **seaweedfs:** consume seaweedfs-provisioning 1.1.0 ([e53ae73](https://github.com/OKDP/sandbox-dependencies/commit/e53ae731260d52185453f5ce5780a67d52134115))
+
 ## [1.0.1](https://github.com/OKDP/sandbox-dependencies/compare/seaweedfs/v1.0.0...seaweedfs/v1.0.1) (2026-09-25)
 
 
