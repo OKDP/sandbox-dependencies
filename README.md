@@ -68,7 +68,7 @@ Each package is a single KuboCD manifest under `packages/<layer>/<name>/`, and t
 | [`ingress-nginx`](./packages/system/ingress-nginx) | `4.12.1-p03` | NGINX ingress controller, in `nodePort`, `hostPort` or `metallb` mode |
 | [`keycloak`](./packages/system/keycloak) | `24.4.11-p14` | Keycloak identity and access management |
 | [`kubauth`](./packages/system/kubauth) | `0.3.0-snapshot-p01` | Kubernetes-native OIDC provider, where users, groups and OIDC clients are custom resources |
-| [`kubocd-webhooks`](./packages/system/kubocd-webhooks) | `v0.4.2-1.0.1` | Second stage of the KuboCD deployment |
+| [`kubocd-webhooks`](./packages/system/kubocd-webhooks) | `v0.4.3-1.1.0` | Second stage of the KuboCD deployment |
 | [`local-secrets-provider`](./packages/system/local-secrets-provider) | `1.0.0-p06` | Kubernetes Secrets provisioned from a static list, a local stand-in for a secret manager |
 | [`tools`](./packages/system/tools) | `1.0.0-p01` | Reloader, replicator and secret-generator utilities |
 | [`vault`](./packages/system/vault) | `0.29.1-p01` | HashiCorp Vault, the secret backend a SecretStore points at, in dev mode by default |
